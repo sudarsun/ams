@@ -218,7 +218,7 @@ file_train_indices_rouge_dropped = file_train_indices.drop(columns = rouge_indic
 # print(file_train_indices_rouge_dropped.shape)
 
 
-#loading models
+#loading Regressor models
 import pickle 
     
 os.chdir(curr_pwd)
@@ -274,12 +274,32 @@ predicted_dict = {'dt':mean_pred_dt,
                  }
 
 
+
+# Loading Hardness model 
+
+
+
+os.chdir(curr_pwd)
+
+
+os.chdir(curr_pwd+'/model/')
+with open('xg_hardness_clf.pkl', 'rb') as f:
+    hardness_clf = pickle.load(f)
+
+
+
+# Predicted Hardness label
+predicted_hardness = hardness_clf.predict(file_train_indices_rouge_dropped)
+
+
+
+
 generate_true_f1 = input("Do you want to generate True F1 (Best score after 5-fold cross-validation is displayed) scores(Y/N):")
 
 if(generate_true_f1 == 'Y' or generate_true_f1 == 'y' ):
 	# calculating ground truth F1 score  
 	'''Uncomment to generate ground truth '''
-
+	os.chdir(curr_pwd)
 	print("----------------------KNN-----------------")
 	print(grid_knn(sample_bags))
 	print("----------------------RF-----------------")
@@ -322,6 +342,8 @@ if(generate_true_f1 == 'Y' or generate_true_f1 == 'y' ):
 	}
 
 
+
+
 	if(len(sample_bags)==1):
 
 		print("---------------------------RESULT------------------------------")
@@ -331,6 +353,13 @@ if(generate_true_f1 == 'Y' or generate_true_f1 == 'y' ):
 
 		
 		print("True F1 scores: ",sorted(true_f1_dict.items(), key=lambda x: x[1], reverse=True))           
+
+		from scipy import stats
+		# predicted_hardness_label = stats.mode(predicted_hardness)[0][0]
+		if(predicted_hardness == 0):
+			print("Predicted classification complexity:  HARD to Classify")
+		else:
+			print("Predicted classification complexity:  EASY to Classify")
 
 		print("---------------------------END------------------------------")
 		exit()
@@ -416,6 +445,12 @@ if(generate_true_f1 == 'Y' or generate_true_f1 == 'y' ):
 
 		print("True F1 scores(built over entire dataset): ",sorted(true_f1_dict_full.items(), key=lambda x: x[1], reverse=True))           
 
+		from scipy import stats
+		predicted_hardness_label = stats.mode(predicted_hardness)[0][0]
+		if(predicted_hardness_label == 0):
+			print("Predicted classification complexity:  HARD to Classify")
+		else:
+			print("Predicted classification complexity:  EASY to Classify")
 		print("---------------------------END------------------------------")
 		exit()
 
@@ -433,6 +468,13 @@ else:
 	print("Predicted F1 scores: ",sorted(predicted_dict.items(), key=lambda x: x[1], reverse=True))           
 
 	print("Top classifier:",max(predicted_dict, key=predicted_dict.get))
+
+	if(predicted_hardness == 0):
+		print("Predicted classification complexity:  HARD to Classify")
+	else:
+		print("Predicted classification complexity:  EASY to Classify")
+
+
 	print("---------------------------END------------------------------")
 
 	exit()
